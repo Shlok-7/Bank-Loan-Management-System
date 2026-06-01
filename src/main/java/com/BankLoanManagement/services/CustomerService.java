@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.BankLoanManagement.entities.Customer;
 import com.BankLoanManagement.exceptions.ResourceNotFoundException;
 import com.BankLoanManagement.repositories.CustomerRepo;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
  
@@ -13,26 +14,43 @@ public class CustomerService {
 	
 
 	private CustomerRepo customerRepo;
+	private PasswordEncoder passwordEncoder; // Add this
  
-	public CustomerService(CustomerRepo customerRepo) {
+	public CustomerService(CustomerRepo customerRepo, PasswordEncoder passwordEncoder) {
 		this.customerRepo = customerRepo;
+		this.passwordEncoder = passwordEncoder;
 	}
 	
-	// register customer 
-	public Customer registerCustomer(Customer customer) {
-		//check if Email is already taken
-		Customer existing=customerRepo.findByEmail(customer.getEmail()).orElse(null);
-		if(existing!=null) {
-			throw new ResourceNotFoundException("Customer email already exists");
+	// 1. Register Customer (Updated with BCrypt)
+		public Customer registerCustomer(Customer customer) {
+			if (customerRepo.existsByEmail(customer.getEmail())) {
+				throw new ResourceNotFoundException("Customer email already exists");
+			}
+			
+			if (customerRepo.existsByPhone(customer.getPhone())) {
+				throw new ResourceNotFoundException("Customer phone number is already registered.");
+			}
+			
+	        // ENCRYPT THE PASSWORD BEFORE SAVING
+	        String encodedPassword = passwordEncoder.encode(customer.getPassword());
+	        customer.setPassword(encodedPassword);
+	        
+			customer.setKycStatus(Customer.KycStatus.PENDING);
+			return customerRepo.save(customer);
 		}
 		
-		// check if Phone Number is already taken
-		if (customerRepo.existsByPhone(customer.getPhone())) {
-					throw new ResourceNotFoundException("Customer phone number '" + customer.getPhone() + "' is already registered.");
+	    // 2. Login Customer (Updated with BCrypt matching)
+		public Customer loginCustomer(String email, String rawPassword) {
+			Customer customer = customerRepo.findByEmail(email).orElseThrow(() -> 
+			    new ResourceNotFoundException("No account found with this email."));
+			
+			// USE .matches() TO COMPARE THE RAW TEXT WITH THE ENCRYPTED DATABASE HASH
+			if (!passwordEncoder.matches(rawPassword, customer.getPassword())) {
+				throw new ResourceNotFoundException("Incorrect password. Please try again.");
+			}
+			
+			return customer;
 		}
-		customer.setKycStatus(Customer.KycStatus.PENDING);
-		return customerRepo.save(customer);
-	}
 	
 	
 	// get all customers

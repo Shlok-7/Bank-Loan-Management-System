@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - NexusBank</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f8fc; }
+        .card { border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: none; }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center vh-100">
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5 col-lg-4">
+                <div class="card p-4">
+                    <h3 class="text-center mb-4 fw-bold" style="color: #0f172a;">Welcome Back</h3>
+                    
+                    <div id="messageAlert" class="alert d-none" role="alert"></div>
+
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="loginBtn">Login</button>
+                    </form>
+                    
+                    <div class="text-center mt-3">
+                        <a href="register.html" class="text-decoration-none">Don't have an account? Register</a>
+						<br><br>
+						<a href="/index.html" class="text-decoration-none text-muted fw-semibold">&larr; Return to Home Page</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+		// If a user is already logged in, instantly kick them to the homepage
+		        if (localStorage.getItem('loggedInUserName')) {
+		            window.location.replace('/index.html');
+		        }
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const btn = document.getElementById('loginBtn');
+            const alertBox = document.getElementById('messageAlert');
+            btn.innerText = "Authenticating...";
+            btn.disabled = true;
+
+            const loginData = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+			fetch('/customers/login', {
+			                method: 'POST',
+			                headers: { 'Content-Type': 'application/json' },
+			                body: JSON.stringify(loginData)
+			            })
+			            .then(async response => {
+			                const isJson = response.headers.get('content-type')?.includes('application/json');
+			                const data = isJson ? await response.json() : await response.text();
+
+			                if (response.status === 200) {
+			                    // Save shared details
+			                    localStorage.setItem('loggedInUserName', data.name);
+			                    localStorage.setItem('userRole', data.role);
+			                    
+			                    alertBox.className = "alert alert-success";
+			                    alertBox.classList.remove('d-none');
+			                    
+			                    // ROUTING LOGIC
+			                    if (data.role === 'ADMIN') {
+			                        alertBox.innerText = "Admin Login successful! Accessing secure portal...";
+			                        setTimeout(() => { window.location.replace('/admin/admin-dashboard.html'); }, 1000);
+			                    } else {
+			                        // It's a regular customer
+			                        localStorage.setItem('loggedInUserId', data.customerId);
+			                        alertBox.innerText = "Login successful! Redirecting to homepage...";
+			                        setTimeout(() => { window.location.replace('/index.html'); }, 1000);
+			                    }
+			                    
+			                } else {
+			                    alertBox.className = "alert alert-danger";
+			                    alertBox.innerText = data.message || "Invalid email or password.";
+			                    alertBox.classList.remove('d-none');
+			                }
+			            })
+            .catch(error => {
+                console.error('Error:', error);
+                alertBox.className = "alert alert-danger";
+                alertBox.innerText = "Could not connect to the server.";
+                alertBox.classList.remove('d-none');
+            })
+            .finally(() => {
+                btn.innerText = "Login";
+                btn.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>
