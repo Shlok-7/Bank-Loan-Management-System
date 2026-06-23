@@ -15,28 +15,28 @@ import lombok.NoArgsConstructor;
 	public class Banks {
 
 	    @Id
-	    @Column(name = "BankID")
+	    @Column(name = "bankid")
 	    private Integer bankID;
 
-	    @Column(name = "BankName")
+	    @Column(name = "bank_name")
 	    private String bankName;
 
-	    @Column(name = "BranchCode")
+	    @Column(name = "branch_code")
 	    private String branchCode;
 
-	    @Column(name = "BranchAddress")
+	    @Column(name = "branch_address")
 	    private String branchAddress;
 
-	    @Column(name = "ContactNumber")
+	    @Column(name = "contact_number")
 	    private String contactNumber;
 
-	    @Column(name = "Location")
+	    @Column(name = "location")
 	    private String location;
 	    
 
 	    @OneToMany(mappedBy = "bank", cascade = CascadeType.ALL)
 	    @JsonManagedReference
-	    private List<LoanProducts> loanProducts;
+	    public  List<LoanProducts> loanProducts;
 	    
 	    
 	}

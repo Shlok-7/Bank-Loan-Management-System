@@ -3,6 +3,8 @@ package com.BankLoanManagement.repositories;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -33,6 +35,10 @@ public interface RepaymentsRepo extends JpaRepository <Repayments, Integer>{
             List<Integer> applicationIds, 
             Repayments.PaymentStatus status
     );
+    
+    Page<Repayments> findByLoanApplication_ApplicationId(Long applicationId, Pageable pageable);
+    
+    
     
 
 }

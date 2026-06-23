@@ -24,30 +24,30 @@ public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
+    @Column(name="customer_id")
     private Integer customerId; 
 
     @NotBlank(message = "Name cannot be empty")
-    @Column(nullable = false, length = 100)
+    @Column(name= "name" , nullable = false, length = 100)
     private String name;
 
     @Email(message = "Must be a valid email address")
     @NotBlank(message = "Email is required")
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(name = "email" , nullable = false, unique = true, length = 100)
     private String email;
     
     //@JsonIgnore
     @NotBlank(message = "Password cannot be empty")
-    @Column(nullable = false, length = 100)
+    @Column(name = "password",nullable = false, length = 100)
     private String password;
 
     @NotBlank(message = "Phone number cannot be empty")
     @Pattern(regexp = "^\\d{10}$", message = "Phone number must be exactly 10 digits")
-    @Column(nullable = false,unique=true, length = 15)
+    @Column(name = "phone",nullable = false,unique=true, length = 15)
     private String phone;
 
     @NotBlank(message = "Address cannot be empty")
-    @Column(nullable = false, length = 500) 
+    @Column(name = "address",nullable = false, length = 500) 
     private String address;
 
     public enum KycStatus {
@@ -55,7 +55,7 @@ public class Customer {
     }
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "kyc_status"  ,nullable = false)
     private KycStatus kycStatus;
 
 }

@@ -6,7 +6,8 @@ package com.BankLoanManagement.controllers;
 	import org.springframework.beans.factory.annotation.Autowired;
 	import org.springframework.http.HttpStatus;
 	import org.springframework.http.ResponseEntity;
-	import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 	import org.springframework.web.bind.annotation.GetMapping;
 	import org.springframework.web.bind.annotation.PathVariable;
 	import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +18,7 @@ package com.BankLoanManagement.controllers;
 import com.BankLoanManagement.entities.LoanProducts;
 import com.BankLoanManagement.services.LoanProductsService;
 
-
+@CrossOrigin(origins = "*")
 @RestController
 	public class LoanProductsController {
 		@Autowired
@@ -40,13 +41,13 @@ import com.BankLoanManagement.services.LoanProductsService;
 			 LoanProducts lp = lpservice.addLoanProduct(bankid, newloanproduct) ; 
 			return  new ResponseEntity<>(lp, HttpStatus.OK) ; 
 		}
-		// update no change required 
+		// update
 		@PutMapping("/updateLoanProduct/{id}")
 		public ResponseEntity<LoanProducts> updateLoanProduct(@PathVariable int id , @RequestBody LoanProducts updateproduct){
 			LoanProducts lp = lpservice.updateLoanProduct(id , updateproduct);
 			return  new ResponseEntity<>(lp , HttpStatus.CREATED) ; 
 		}
-		// delete no change required 
+		// delete  
 		@DeleteMapping("/deleteLoanProduct/{id}")
 		public ResponseEntity<String>deleteLoanProduct(@PathVariable int id){
 			lpservice.deleteloanproduct(id);

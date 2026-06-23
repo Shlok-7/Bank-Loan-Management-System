@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -30,33 +31,31 @@ public class ReportingService {
         this.repaymentsService = repaymentsService;
     }
 
-    // =================================================================
-    // ==================  ADMIN REPORT 1: LOAN DASHBOARD  =============
-    // =================================================================
+// ==================  ADMIN 1: Loan Dashboard ===================================================================
 
     public Map<String, Object> getAdminLoanDashboard() {
         try {
             Long approvedCount = reportingRepo.countApprovedLoans();
             Long pendingCount = reportingRepo.countPendingLoans();
-            Double totalDisbursed = reportingRepo.sumTotalAmountDisbursed();
+            Double totalDisbursed = Optional.ofNullable(reportingRepo.sumTotalAmountDisbursed()).orElse(0.0);
             Long totalCustomers = reportingRepo.countTotalCustomers();
 
-            // ⭐ Calculate total outstanding safely in RAM
+//------------------------- totalOutstanding ----------------------------------
             List<LoanApplication> allApproved = reportingRepo.findAllApprovedLoans();
             List<Integer> appIds = allApproved.stream().map(LoanApplication::getApplicationId).collect(Collectors.toList());
             Map<Integer, BigDecimal> trueBalances = repaymentsService.generateBulkOutstandingBalanceReport(appIds);
-            Double totalOutstanding = trueBalances.values().stream().mapToDouble(BigDecimal::doubleValue).sum();
-
-            List<LoanApplication> recentApps = reportingRepo.findRecentApplicationsForDashboard();
-            List<Map<String, Object>> recentPortfolio = new ArrayList<>();
-
-            int limit = Math.min(recentApps.size(), 10);
-            for (int i = 0; i < limit; i++) {
-                recentPortfolio.add(buildRecentPortfolioRow(recentApps.get(i)));
-            }
+            
+            Double totalOutstanding = trueBalances.values().stream()
+                    .mapToDouble(BigDecimal::doubleValue)
+                    .sum();
+//--------------------------------------------------------------------------------
+            List<Map<String, Object>> recentPortfolio = reportingRepo.findRecentApplicationsForDashboard().stream()
+                    .limit(10)
+                    .map(this::buildRecentPortfolioRow)
+                    .collect(Collectors.toList());
 
             Map<String, Object> dashboard = new HashMap<>();
-            dashboard.put("totalActiveLoans", approvedCount);
+       //   dashboard.put("totalActiveLoans", approvedCount);
             dashboard.put("pendingApplications", pendingCount);
             dashboard.put("approvedApplications", approvedCount);
             dashboard.put("totalAmountDisbursed", totalDisbursed);
@@ -66,10 +65,10 @@ public class ReportingService {
 
             return dashboard;
         } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate Admin Loan Dashboard: " + ex.getMessage());
+            throw new RuntimeException("Failed to generate Admin Loan Dashboard: " + ex.getMessage(), ex);
         }
     }
-
+// ---------------- build portfolio for recentPortfolio --------------
     private Map<String, Object> buildRecentPortfolioRow(LoanApplication la) {
         Map<String, Object> row = new HashMap<>();
         row.put("applicationId", la.getApplicationId());
@@ -83,23 +82,18 @@ public class ReportingService {
         return row;
     }
 
-    // =================================================================
-    // ================  ADMIN REPORT 2: REPAYMENT REPORT  =============
-    // =================================================================
+// ================  ADMIN 2: REPAYMENT ===================================================================================================
 
     public Map<String, Object> getAdminRepaymentReport() {
         try {
-            BigDecimal totalExpected = reportingRepo.sumTotalExpectedRepayments();
-            BigDecimal totalCollected = reportingRepo.sumTotalCollectedRepayments();
+            BigDecimal totalExpected = Optional.ofNullable(reportingRepo.sumTotalExpectedRepayments()).orElse(BigDecimal.ZERO);
+            BigDecimal totalCollected = Optional.ofNullable(reportingRepo.sumTotalCollectedRepayments()).orElse(BigDecimal.ZERO);
             Long completedCount = reportingRepo.countCompletedRepayments();
             Long pendingCount = reportingRepo.countPendingRepayments();
 
-            List<Repayments> allRepayments = reportingRepo.findAllRepaymentsWithFullDetails();
-            List<Map<String, Object>> repaymentPerformance = new ArrayList<>();
-
-            for (Repayments r : allRepayments) {
-                repaymentPerformance.add(buildRepaymentPerformanceRow(r));
-            }
+            List<Map<String, Object>> repaymentPerformance = reportingRepo.findAllRepaymentsWithFullDetails().stream()
+                    .map(this::buildRepaymentPerformanceRow)
+                    .collect(Collectors.toList());
 
             Map<String, Object> report = new HashMap<>();
             report.put("totalExpectedRepayments", totalExpected);
@@ -110,7 +104,7 @@ public class ReportingService {
 
             return report;
         } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate Admin Repayment Report: " + ex.getMessage());
+            throw new RuntimeException("Failed to generate Admin Repayment Report: " + ex.getMessage(), ex);
         }
     }
 
@@ -129,9 +123,7 @@ public class ReportingService {
         return row;
     }
 
-    // =================================================================
-    // =============  ADMIN REPORT 3: OUTSTANDING LOAN REPORT  =========
-    // =================================================================
+// ========================  ADMIN 3: OUTSTANDING LOAN ==============================
 
     public Map<String, Object> getAdminOutstandingReport() {
         try {
@@ -141,56 +133,70 @@ public class ReportingService {
             List<Integer> appIds = allApprovedLoans.stream().map(LoanApplication::getApplicationId).collect(Collectors.toList());
             Map<Integer, BigDecimal> trueBalances = repaymentsService.generateBulkOutstandingBalanceReport(appIds);
 
-            // ⭐ Filter ONLY loans that actually have a balance > 0 in RAM
-            List<LoanApplication> outstandingLoans = new ArrayList<>();
-            for (LoanApplication la : allApprovedLoans) {
-                if (trueBalances.getOrDefault(la.getApplicationId(), BigDecimal.ZERO).compareTo(BigDecimal.ZERO) > 0) {
-                    outstandingLoans.add(la);
-                }
-            }
-
-            Long overdueCount = (long) outstandingLoans.size();
+            // Filter out fully paid off loan items early
+            List<LoanApplication> outstandingLoans = allApprovedLoans.stream()
+                    .filter(la -> trueBalances.getOrDefault(la.getApplicationId(), BigDecimal.ZERO).compareTo(BigDecimal.ZERO) > 0)
+                    .collect(Collectors.toList());
             
+            //1 realTotalOutstanding
             BigDecimal realTotalOutstanding = outstandingLoans.stream()
                     .map(la -> trueBalances.get(la.getApplicationId()))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-
+            
+            //3 largestOutstanding
             BigDecimal largestOutstanding = outstandingLoans.stream()
                     .map(la -> trueBalances.get(la.getApplicationId()))
-                    .max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
-                    
+                    .max(BigDecimal::compareTo)
+                    .orElse(BigDecimal.ZERO);
+            
+            //4 avgOutstanding        
             BigDecimal avgOutstanding = outstandingLoans.isEmpty() ? BigDecimal.ZERO : 
                     realTotalOutstanding.divide(BigDecimal.valueOf(outstandingLoans.size()), 2, java.math.RoundingMode.HALF_UP);
 
+            //2 trueOverdueCount
+            long trueOverdueCount = 0;
             List<Map<String, Object>> outstandingPortfolio = new ArrayList<>();
+            
             for (LoanApplication la : outstandingLoans) {
                 BigDecimal trueBalance = trueBalances.get(la.getApplicationId());
-                outstandingPortfolio.add(buildOutstandingPortfolioRow(la, today, trueBalance));
+                                          //-- 5 build portfolio
+                Map<String, Object> row = buildOutstandingPortfolioRow(la, today, trueBalance);
+                outstandingPortfolio.add(row);
+                
+                // Calculate the count based on actual overdue age tracking metrics
+                if ((long) row.get("daysOverdue") > 0) {
+                    trueOverdueCount++;
+                }
             }
+            //----------
 
-            // Sort portfolio by balance descending
+            //6 Sort portfolio by balance descending cleanly using explicit type mapping conversions
             outstandingPortfolio.sort((a, b) -> ((BigDecimal) b.get("outstandingBalance")).compareTo((BigDecimal) a.get("outstandingBalance")));
 
             Map<String, Object> report = new HashMap<>();
             report.put("totalOutstandingBalance", realTotalOutstanding);
-            report.put("countOfOverdueLoans", overdueCount);
+            report.put("countOfOverdueLoans", trueOverdueCount); 
             report.put("largestOutstandingAmount", largestOutstanding);
             report.put("averageOutstandingBalance", avgOutstanding);
             report.put("detailedOutstandingPortfolio", outstandingPortfolio);
 
             return report;
         } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate Admin Outstanding Loan Report: " + ex.getMessage());
+            throw new RuntimeException("Failed to generate Admin Outstanding Loan Report: " + ex.getMessage(), ex);
         }
     }
 
+ // ---------------- 5 build portfolio for OutstandingPortfolio --------------
     private Map<String, Object> buildOutstandingPortfolioRow(LoanApplication la, LocalDate today, BigDecimal trueBalance) {
+    	
+    	// -------- find the daysOverdue of a loan 
         List<Repayments> overdueRepayments = reportingRepo.findOverdueRepaymentsByApplicationId(la.getApplicationId(), today);
         long daysOverdue = 0;
         if (!overdueRepayments.isEmpty()) {
             LocalDate oldestDueDate = overdueRepayments.get(0).getDueDate();
             daysOverdue = ChronoUnit.DAYS.between(oldestDueDate, today);
         }
+        //-------
 
         Map<String, Object> row = new HashMap<>();
         row.put("customerName", la.getCustomer().getName());
@@ -207,9 +213,7 @@ public class ReportingService {
         return row;
     }
 
-    // =================================================================
-    // ===============  CUSTOMER REPORT 1: LOAN SUMMARY  ===============
-    // =================================================================
+// ====================== CUSTOMER 1: LOAN SUMMARY ==============================================================
 
     public Map<String, Object> getCustomerLoanSummary(Integer customerId) {
         validateCustomerExists(customerId);
@@ -217,17 +221,21 @@ public class ReportingService {
             List<LoanApplication> customerLoans = reportingRepo.findLoanApplicationsByCustomer(customerId);
 
             Long activeLoans = reportingRepo.countApprovedLoansByCustomer(customerId);
+            
+           // totalApprovedAmount
             Double totalApproved = customerLoans.stream()
                     .filter(la -> "APPROVED".equalsIgnoreCase(String.valueOf(la.getApprovalStatus())))
                     .mapToDouble(LoanApplication::getLoanAmount)
                     .sum();
+
+            BigDecimal totalRepaymentAmount = Optional.ofNullable(reportingRepo.sumTotalRepaymentAmountByCustomer(customerId)).orElse(BigDecimal.ZERO);
 
             List<BigDecimal> nextAmounts = reportingRepo.findNextRepaymentAmountByCustomer(customerId);
             BigDecimal nextRepaymentAmount = nextAmounts.isEmpty() ? BigDecimal.ZERO : nextAmounts.get(0);
 
             List<LocalDate> nextDates = reportingRepo.findNextDueDateByCustomer(customerId);
             LocalDate nextDueDate = nextDates.isEmpty() ? null : nextDates.get(0);
-
+           //--------remaining principle
             List<Integer> appIds = customerLoans.stream()
                     .map(LoanApplication::getApplicationId)
                     .collect(Collectors.toList());
@@ -240,12 +248,17 @@ public class ReportingService {
             List<Map<String, Object>> loanDetails = new ArrayList<>();
             for (LoanApplication la : customerLoans) {
                 BigDecimal trueBalance = trueBalances.getOrDefault(la.getApplicationId(), BigDecimal.ZERO);
-                loanDetails.add(buildCustomerLoanDetailRow(la, nextDueDate, trueBalance));
+                
+                // Total repayment lookup strategy handled per target entry point instance mapping 
+                BigDecimal loanTotalRepayment = Optional.ofNullable(reportingRepo.sumTotalRepaymentAmountByApplicationId(la.getApplicationId())).orElse(BigDecimal.ZERO);
+                
+                loanDetails.add(buildCustomerLoanDetailRow(la, nextDueDate, trueBalance, loanTotalRepayment));
             }
             
             Map<String, Object> summary = new HashMap<>();
             summary.put("totalActiveLoans", activeLoans);
             summary.put("totalApprovedAmount", totalApproved);
+            summary.put("totalRepaymentAmount", totalRepaymentAmount); 
             summary.put("remainingPrincipal", remainingPrincipal);
             summary.put("nextRepaymentAmount", nextRepaymentAmount);
             summary.put("loanDetails", loanDetails);
@@ -254,15 +267,16 @@ public class ReportingService {
         } catch (ResourceNotFoundException re) {
             throw re; 
         } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate Customer Loan Summary: " + ex.getMessage());
+            throw new RuntimeException("Failed to generate Customer Loan Summary: " + ex.getMessage(), ex);
         }
     }
 
-    private Map<String, Object> buildCustomerLoanDetailRow(LoanApplication la, LocalDate nextDueDate, BigDecimal trueBalance) {
+    private Map<String, Object> buildCustomerLoanDetailRow(LoanApplication la, LocalDate nextDueDate, BigDecimal trueBalance, BigDecimal loanTotalRepayment) {
         Map<String, Object> row = new HashMap<>();
         row.put("applicationId", la.getApplicationId());
         row.put("loanProduct", la.getLoanProduct().getLoanProductName());
         row.put("totalAmount", la.getLoanAmount());
+        row.put("totalRepaymentAmount", loanTotalRepayment); 
         row.put("interestRate", la.getLoanProduct().getInterestRate());
         row.put("outstandingBalance", trueBalance); 
         row.put("loanTenure", la.getLoanProduct().getTenure());
@@ -272,9 +286,7 @@ public class ReportingService {
         return row;
     }
 
-    // =================================================================
-    // ===========  CUSTOMER REPORT 2: REPAYMENT HISTORY  =============
-    // =================================================================
+   // ====================== CUSTOMER 2: REPAYMENT HISTORY ==============================
 
     public Map<String, Object> getCustomerRepaymentHistory(Integer customerId) {
         validateCustomerExists(customerId);
@@ -284,12 +296,9 @@ public class ReportingService {
             Optional<LocalDate> latestPaymentDate = reportingRepo.findLatestPaymentDateByCustomer(customerId);
             Optional<LocalDate> nextPaymentDate = reportingRepo.findNextPaymentDateByCustomer(customerId);
 
-            List<Repayments> repayments = reportingRepo.findRepaymentHistoryByCustomer(customerId);
-            List<Map<String, Object>> repaymentLog = new ArrayList<>();
-
-            for (Repayments r : repayments) {
-                repaymentLog.add(buildRepaymentLogRow(r));
-            }
+            List<Map<String, Object>> repaymentLog = reportingRepo.findRepaymentHistoryByCustomer(customerId).stream()
+                    .map(this::buildRepaymentLogRow)
+                    .collect(Collectors.toList());
 
             Map<String, Object> history = new HashMap<>();
             history.put("totalPaymentsMade", totalPayments);
@@ -302,7 +311,7 @@ public class ReportingService {
         } catch (ResourceNotFoundException re) {
             throw re;
         } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate Customer Repayment History: " + ex.getMessage());
+            throw new RuntimeException("Failed to generate Customer Repayment History: " + ex.getMessage(), ex);
         }
     }
 
@@ -317,30 +326,31 @@ public class ReportingService {
         return row;
     }
 
-    // =================================================================
-    // ===========  CUSTOMER REPORT 3: OUTSTANDING BALANCE  ===========
-    // =================================================================
+ // ===========================  CUSTOMER 3: OUTSTANDING BALANCE  ===================================
 
     public Map<String, Object> getCustomerOutstandingBalance(Integer customerId) {
         validateCustomerExists(customerId);
         try {
             LocalDate today = LocalDate.now();
 
-            BigDecimal currentDueAmount = reportingRepo.sumCurrentDueAmountByCustomer(customerId);
-            BigDecimal overdueBalance = reportingRepo.sumOverdueBalanceByCustomer(customerId, today);
+         // will pass 'today' so it will grab past due + currently due installments
+         // BigDecimal currentDueAmount = Optional.ofNullable(reportingRepo.sumCurrentDueAmountByCustomer(customerId, today)).orElse(BigDecimal.ZERO);
+       
+            // passed deadline  
+            BigDecimal overdueBalance = Optional.ofNullable(reportingRepo.sumOverdueBalanceByCustomer(customerId, today)).orElse(BigDecimal.ZERO);
+          // total repayment of approved loajs
+            BigDecimal totalRepaymentAmount = Optional.ofNullable(reportingRepo.sumTotalRepaymentAmountByCustomer(customerId)).orElse(BigDecimal.ZERO);
 
+            // outstanding logic starts
             List<LoanApplication> allCustomerApprovedLoans = reportingRepo.findApprovedLoansByCustomer(customerId);
             List<Integer> appIds = allCustomerApprovedLoans.stream().map(LoanApplication::getApplicationId).collect(Collectors.toList());
             Map<Integer, BigDecimal> trueBalances = repaymentsService.generateBulkOutstandingBalanceReport(appIds);
             
-            // ⭐ Filter for balances > 0 in RAM
-            List<LoanApplication> outstandingLoans = new ArrayList<>();
-            for(LoanApplication la : allCustomerApprovedLoans) {
-                if (trueBalances.getOrDefault(la.getApplicationId(), BigDecimal.ZERO).compareTo(BigDecimal.ZERO) > 0) {
-                    outstandingLoans.add(la);
-                }
-            }
+            List<LoanApplication> outstandingLoans = allCustomerApprovedLoans.stream()
+                    .filter(la -> trueBalances.getOrDefault(la.getApplicationId(), BigDecimal.ZERO).compareTo(BigDecimal.ZERO) > 0)
+                    .collect(Collectors.toList());
             
+            // complete oustanding of all loan, 
             BigDecimal realTotalOutstanding = outstandingLoans.stream()
                     .map(la -> trueBalances.get(la.getApplicationId()))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -348,14 +358,16 @@ public class ReportingService {
             List<Map<String, Object>> outstandingDetails = new ArrayList<>();
             for (LoanApplication la : outstandingLoans) {
                 BigDecimal trueBalance = trueBalances.get(la.getApplicationId());
-                outstandingDetails.add(buildCustomerOutstandingRow(la, today, trueBalance));
+                BigDecimal loanTotalRepayment = Optional.ofNullable(reportingRepo.sumTotalRepaymentAmountByApplicationId(la.getApplicationId())).orElse(BigDecimal.ZERO);
+                outstandingDetails.add(buildCustomerOutstandingRow(la, today, trueBalance, loanTotalRepayment));
             }
             
             outstandingDetails.sort((a, b) -> ((BigDecimal) b.get("outstandingAmount")).compareTo((BigDecimal) a.get("outstandingAmount")));
 
             Map<String, Object> balance = new HashMap<>();
+            balance.put("totalRepaymentAmount", totalRepaymentAmount); 
             balance.put("totalOutstandingBalance", realTotalOutstanding); 
-            balance.put("currentDueAmount", currentDueAmount);
+       //   balance.put("currentDueAmount", currentDueAmount);
             balance.put("overdueBalance", overdueBalance);
             balance.put("outstandingBalanceDetails", outstandingDetails);
 
@@ -363,11 +375,11 @@ public class ReportingService {
         } catch (ResourceNotFoundException re) {
             throw re;
         } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate Customer Outstanding Balance: " + ex.getMessage());
+            throw new RuntimeException("Failed to generate Customer Outstanding Balance: " + ex.getMessage(), ex);
         }
     }
 
-    private Map<String, Object> buildCustomerOutstandingRow(LoanApplication la, LocalDate today, BigDecimal trueBalance) {
+    private Map<String, Object> buildCustomerOutstandingRow(LoanApplication la, LocalDate today, BigDecimal trueBalance, BigDecimal loanTotalRepayment) {
         List<Repayments> overdueRepayments = reportingRepo.findOverdueRepaymentsByApplicationId(la.getApplicationId(), today);
         long daysOverdue = 0;
         if (!overdueRepayments.isEmpty()) {
@@ -380,7 +392,7 @@ public class ReportingService {
         Map<String, Object> row = new HashMap<>();
         row.put("applicationId", la.getApplicationId());
         row.put("principalAmount", la.getLoanAmount());
-        row.put("remainingBalance", trueBalance); 
+        row.put("totalRepaymentAmount", loanTotalRepayment); 
         row.put("outstandingAmount", trueBalance); 
         row.put("daysOverdue", daysOverdue);
         row.put("nextDueDate", nextDueDate.orElse(null));

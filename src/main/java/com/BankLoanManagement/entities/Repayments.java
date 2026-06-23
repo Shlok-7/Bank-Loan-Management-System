@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 
 
 @Entity // Tells spring boot and hibernate that this java class represents a database table.
-@Table(name="Repayments")
+@Table(name="repayments")
 @Data // Lombok annotation which generates all boilerplate code (getters and setters) at compile time
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,28 +28,26 @@ public class Repayments {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer repaymentId; // Primary key
-	
-	// Stores the id from module 3 (linked module of loan application)
-	//Here i will establish relationship with Module 3 by annotations and taking 
-	//complete LoanApplication as an object (table).
+	@Column(name = "repayment_id")
+	private Integer repaymentId;
+
 	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(nullable = false) // Matches Module 3's PK
-    private LoanApplication loanApplication;
-	
+	@JoinColumn(name = "loan_application_application_id", nullable = false)
+	private LoanApplication loanApplication;
+
 	
 	
 	// Stores the date the EMI is scheduled to be paid
-	@Column(nullable = false)
+	@Column(name = "due_date" , nullable = false)
 	private LocalDate dueDate;
 	
 	// Renamed to 'amountDue' so Lombok generates 'setAmountDue()' to match our Service logic perfectly.
 	// Maximum no.of digits is 10 and decimal upto 2 places
-	@Column(name="amountDue", nullable = false, precision = 10, scale = 2)
+	@Column(name="amount_due", nullable = false, precision = 10, scale = 2)
 	private BigDecimal amountDue; 
 	
 	// REMOVED 'nullable = false' because this MUST be blank until the customer actually makes a payment!
-	@Column(name="paymentDate") 
+	@Column(name="payment_date") 
 	private LocalDate paymentDate;
 	
 	// Defines a custom enumeration type, restricting the values this variable can hold.
@@ -59,7 +57,7 @@ public class Repayments {
 	
 	// Tells hibernate to store enum text (e.g., "PENDING") instead of a numerical index
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
+	@Column(name = "payment_status" , nullable = false)
 	private PaymentStatus paymentStatus;
 	
 }

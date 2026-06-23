@@ -1,9 +1,16 @@
 package com.BankLoanManagement.controllers;
 
 import java.util.HashMap;
+
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,9 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.BankLoanManagement.dto.LoginDto;
 import com.BankLoanManagement.entities.Customer;
+import com.BankLoanManagement.repositories.CustomerRepo;
 import com.BankLoanManagement.services.CustomerService;
 
 import jakarta.validation.Valid;
+
  
 @CrossOrigin(origins = "*") // Allows your HTML file to communicate with this controller
 @RestController 
@@ -33,15 +42,18 @@ public class CustomerController {
     public CustomerController(CustomerService customerService) {
         this.customerService = customerService;
     }
+    
+    @Autowired
+    CustomerRepo custrepo ; 
  
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> loginCustomer(@RequestBody com.BankLoanManagement.dto.LoginDto loginDto) {
         Map<String, Object> response = new HashMap<>();
 
-        // 1. Hardcoded Admin Check
-        if ("admin@nexusbank.com".equals(loginDto.getEmail()) && "admin123".equals(loginDto.getPassword())) {
+        // 1. Hardcoded Admin Check 
+        if ("admin@loanSync.com".equals(loginDto.getEmail()) && "admin123".equals(loginDto.getPassword())) {
             response.put("role", "ADMIN");
-            response.put("name", "Super Admin");
+            response.put("name", "Admin");
             return new ResponseEntity<>(response, HttpStatus.OK);
         }
 
@@ -93,6 +105,14 @@ public class CustomerController {
             @RequestParam Customer.KycStatus status) {
             return new ResponseEntity<>(customerService.updateKycStatus(customerId, status), HttpStatus.OK);
  
+    }
+    @GetMapping("/paginated")
+    public Page<Customer> getPaginatedCustomers(
+        @RequestParam(defaultValue = "0") int page, 
+        @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return custrepo.findAll(pageable); // Assuming you are using JpaRepository
     }
     
 }

@@ -9,6 +9,8 @@ import com.BankLoanManagement.services.LoanApplicationService;
 import com.BankLoanManagement.services.RepaymentsService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
@@ -39,30 +41,81 @@ public class LoanApplicationService {
      * 3. Records the current server date as the application date.
      */
     
-    public LoanApplication applyForLoan(LoanApplication app) {
-    	// 1. KYC Handshake (Module 3 -> Module 1)
-        Customer.KycStatus status = customerService.getKycStatus(app.getCustomer().getCustomerId());
-        if (status != Customer.KycStatus.VERIFIED) {
-            throw new RuntimeException("KYC not verified.");
+    	public LoanApplication applyForLoan(LoanApplication app) {
+        	
+        	
+        	// 1. KYC Handshake (Module 3 -> Module 1)
+        	// app.getCustomer().getCustomerId() extracts the number "50"
+        	// customerService takes that "50", looks up the full profile in the database, and finds the KYC status
+            //  Customer.KycStatus, it means KycStatus is an Inner Enum defined inside the Customer class.
+            Customer.KycStatus status = customerService.getKycStatus(app.getCustomer().getCustomerId());
+            if (status != Customer.KycStatus.VERIFIED) {
+                throw new RuntimeException("KYC not verified.");
+            }
+         
+            
+            
+            // 2. Amount Range Handshake (Module 3 -> Module 2)
+            // Fetch the product details using the ID sent in the request
+            LoanProducts product = loanProductService.getLoanProductById(app.getLoanProduct().getLoanProductID());
+            double requestedAmount = app.getLoanAmount();
+            if (requestedAmount < product.getMinAmount() || requestedAmount > product.getMaxAmount()) {
+                throw new RuntimeException("Invalid Amount: For this product, amount must be between "
+                                            + product.getMinAmount() + " and " + product.getMaxAmount());
+            }
+            
+            
+            
+            
+            
+         // Fetch the IDs from the incoming application object
+            Integer customerId = app.getCustomer().getCustomerId();
+            Integer productId = app.getLoanProduct().getLoanProductID();
+         // NEW RULE: Check for an existing active loan of the same type
+         // 3. Smart Duplication Check: Show specific error messages based on status
+     
+            boolean hasPendingLoan = repository.existsByCustomer_CustomerIdAndLoanProduct_LoanProductIDAndApprovalStatus(
+                    customerId,
+                    productId,
+                    ApprovalStatus.PENDING
+                );
+                if (hasPendingLoan) {
+                    throw new RuntimeException("Application Denied: You already have a pending loan application of this type.");
+                }
+     
+                // Check 3B: Cross-Module Repayments Check for APPROVED loans
+                Page<LoanApplication> previousApplications = repository.findByCustomer_CustomerId(customerId,org.springframework.data.domain.Pageable.unpaged());
+                
+                for (LoanApplication existingApp : previousApplications) {
+                    // Look specifically for APPROVED applications matching this loan product type
+                    if (existingApp.getLoanProduct().getLoanProductID().equals(productId)
+                            && existingApp.getApprovalStatus() == ApprovalStatus.APPROVED) {
+                        
+                        try {
+                            // LIVE HANDSHAKE: Ask RepaymentsService for the remaining balance
+                            java.math.BigDecimal outstandingBalance = repaymentService.calculateOutStandingBalance(existingApp.getApplicationId());
+                            
+                            // If they owe anything greater than 0.00, block them from getting another loan of this type
+                            if (outstandingBalance.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                                throw new RuntimeException("You already have an active loan of this type. Please clear your current loan repayments first.");
+                            }
+                        } catch (com.BankLoanManagement.exceptions.ResourceNotFoundException e) {
+                            // If no repayment records exist yet for an approved loan, treat it as active/unpaid
+                            throw new RuntimeException("You already have an active loan of this type. Please clear your current loan repayments first.");
+                        }
+                    }
+                }
+            
+                
+                
+            // 3. Logic: Generate ID and Save if all rules pass [cite: 67]
+            int randomId = new Random().nextInt(900000) + 100000;
+            app.setApplicationId(randomId);
+            app.setApplicationDate(LocalDate.now());
+            app.setApprovalStatus(ApprovalStatus.PENDING);
+         
+            return repository.save(app);
         }
-     
-        // 2. Amount Range Handshake (Module 3 -> Module 2)
-        // Fetch the product details using the ID sent in the request
-        LoanProducts product = loanProductService.getLoanProductById(app.getLoanProduct().getLoanProductID());
-        double requestedAmount = app.getLoanAmount();
-        if (requestedAmount < product.getMinAmount() || requestedAmount > product.getMaxAmount()) {
-            throw new RuntimeException("Invalid Amount: For this product, amount must be between " 
-                                        + product.getMinAmount() + " and " + product.getMaxAmount());
-        }
-     
-        // 3. Logic: Generate ID and Save if all rules pass [cite: 67]
-        int randomId = new Random().nextInt(900000) + 100000; 
-        app.setApplicationId(randomId);
-        app.setApplicationDate(LocalDate.now());
-        app.setApprovalStatus(ApprovalStatus.PENDING);
-     
-        return repository.save(app);
-    }
     /**
      * Logic: Admin Approval Process (The Handshake)
      * 1. Validates that the application exists and is currently PENDING.
@@ -108,8 +161,8 @@ public class LoanApplicationService {
      * Retrieves all loan applications submitted by a specific customer ID.
      */
     
-    public List<LoanApplication> getApplicationsByCustomer(Integer customerId) {
-        return repository.findByCustomer_CustomerId(customerId);
+    public Page<LoanApplication> getApplicationsByCustomer(Integer customerId, Pageable pageable) {
+        return repository.findByCustomer_CustomerId(customerId,pageable);
     }
  
     /**

@@ -16,22 +16,23 @@ import lombok.NoArgsConstructor;
 	
 		
 		  @Id
-		    @Column(name = "LoanProductID" , nullable=false , unique=true)
+		  @GeneratedValue(strategy = GenerationType.IDENTITY)
+		    @Column(name = "loan_productid" , nullable=false , unique=true)
 		    private Integer loanProductID;   
 
-		    @Column(name = "LoanProductName", nullable = false)
+		    @Column(name = "loan_product_name", nullable = false)
 		    private String loanProductName;  
 
-		    @Column(name = "maxAmount", nullable = false)
+		    @Column(name = "max_amount", nullable = false)
 		    private Double maxAmount;
 
-		    @Column(name = "minAmount", nullable = false)
+		    @Column(name = "min_amount", nullable = false)
 		    private Double minAmount;
 
-		    @Column(name = "interestRate", nullable = false)
+		    @Column(name = "interest_rate", nullable = false)
 		    private Double interestRate;
 
-		    @Column(name = "Tenure", nullable = false)
+		    @Column(name = "tenure", nullable = false)
 		    private Integer tenure;
 	    @ManyToOne
 	    @JoinColumn(name = "bankid") 

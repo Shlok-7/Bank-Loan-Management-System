@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.BankLoanManagement.entities.Banks;
+import com.BankLoanManagement.entities.LoanProducts;
 import com.BankLoanManagement.exceptions.ResourceNotFoundException;
 import com.BankLoanManagement.repositories.BanksRepo;
 
@@ -84,4 +85,12 @@ public class BanksService {
         }
         return repoObject.findAll();
     }
+    
+    // Service to display all loan products after reciveing bank id from user 
+    
+    public List<LoanProducts>getLoanProductByBankId(Integer id) throws Exception {
+    	Banks bobj = repoObject.findById(id).orElseThrow(()-> new Exception("Bank not found")) ; 
+    	return bobj.loanProducts ; 
+    }
+    
 }

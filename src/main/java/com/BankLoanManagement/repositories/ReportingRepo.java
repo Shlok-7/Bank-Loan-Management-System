@@ -14,10 +14,9 @@ import java.util.Optional;
 
 @Repository
 public interface ReportingRepo extends JpaRepository<LoanApplication, Integer> {
-
-    // =================================================================
-    // ==================  ADMIN REPORT 1: LOAN DASHBOARD  =============
-    // =================================================================
+	
+// JPQL Queries
+//==================  ADMIN 1: LOAN DASHBOARD  =================
 
     @Query("SELECT COUNT(la) FROM LoanApplication la WHERE la.approvalStatus = 'APPROVED'")
     Long countApprovedLoans();
@@ -38,9 +37,7 @@ public interface ReportingRepo extends JpaRepository<LoanApplication, Integer> {
            "ORDER BY la.applicationDate DESC")
     List<LoanApplication> findRecentApplicationsForDashboard();
 
-    // =================================================================
-    // ================  ADMIN REPORT 2: REPAYMENT REPORT  =============
-    // =================================================================
+// =====================  ADMIN 2: REPAYMENT ================================
 
     @Query("SELECT COALESCE(SUM(r.amountDue), 0) FROM Repayments r")
     BigDecimal sumTotalExpectedRepayments();
@@ -62,12 +59,10 @@ public interface ReportingRepo extends JpaRepository<LoanApplication, Integer> {
            "ORDER BY r.dueDate ASC")
     List<Repayments> findAllRepaymentsWithFullDetails();
 
-    // =================================================================
-    // =============  ADMIN REPORT 3: OUTSTANDING LOAN REPORT  =========
-    // =================================================================
+// =========================  ADMIN 3: OUTSTANDING LOAN ===========================
 
-    // MODIFIED: Simply fetches all approved loans. Filtering happens in the Service!
-    
+    //fetches all approved loans. 
+    //Filtering in  Service
     @Query("SELECT la FROM LoanApplication la " +
            "JOIN FETCH la.customer c " +
            "JOIN FETCH la.bank b " +
@@ -84,9 +79,7 @@ public interface ReportingRepo extends JpaRepository<LoanApplication, Integer> {
             @Param("applicationId") Integer applicationId,
             @Param("today") LocalDate today);
 
-    // =================================================================
-    // ===============  CUSTOMER REPORT 1: LOAN SUMMARY  ===============
-    // =================================================================
+// =========================  CUSTOMER 1: LOAN SUMMARY  ======================================
 
     @Query("SELECT COUNT(la) > 0 FROM LoanApplication la WHERE la.customer.customerId = :customerId")
     boolean existsApplicationForCustomer(@Param("customerId") Integer customerId);
@@ -116,9 +109,7 @@ public interface ReportingRepo extends JpaRepository<LoanApplication, Integer> {
            "ORDER BY r.dueDate ASC")
     List<LocalDate> findNextDueDateByCustomer(@Param("customerId") Integer customerId);
 
-    // =================================================================
-    // ===========  CUSTOMER REPORT 2: REPAYMENT HISTORY  =============
-    // =================================================================
+// ============================  CUSTOMER 2: REPAYMENT HISTORY  ====================================
 
     @Query("SELECT COUNT(r) FROM Repayments r " +
            "JOIN r.loanApplication la " +
@@ -144,17 +135,21 @@ public interface ReportingRepo extends JpaRepository<LoanApplication, Integer> {
            "JOIN FETCH r.loanApplication la " +
            "JOIN FETCH la.loanProduct lp " +
            "WHERE la.customer.customerId = :customerId " +
-           "ORDER BY r.dueDate DESC")
+           "ORDER BY r.dueDate")
+    //DESC
     List<Repayments> findRepaymentHistoryByCustomer(@Param("customerId") Integer customerId);
 
-    // =================================================================
-    // ===========  CUSTOMER REPORT 3: OUTSTANDING BALANCE  ===========
-    // =================================================================
+// =========================  CUSTOMER 3: OUTSTANDING BALANCE  ======================================
 
+    // Restrict this to installments that are actually due on or before today/current cycle
     @Query("SELECT COALESCE(SUM(r.amountDue), 0) FROM Repayments r " +
            "JOIN r.loanApplication la " +
-           "WHERE la.customer.customerId = :customerId AND r.paymentStatus = 'PENDING'")
-    BigDecimal sumCurrentDueAmountByCustomer(@Param("customerId") Integer customerId);
+           "WHERE la.customer.customerId = :customerId " +
+           "AND r.paymentStatus = 'PENDING' " +
+           "AND r.dueDate <= :currentDateBoundary")
+    BigDecimal sumCurrentDueAmountByCustomer(
+            @Param("customerId") Integer customerId,
+            @Param("currentDateBoundary") LocalDate currentDateBoundary);
 
     @Query("SELECT COALESCE(SUM(r.amountDue), 0) FROM Repayments r " +
            "JOIN r.loanApplication la " +
@@ -165,7 +160,7 @@ public interface ReportingRepo extends JpaRepository<LoanApplication, Integer> {
             @Param("customerId") Integer customerId,
             @Param("today") LocalDate today);
 
-    // ⭐ MODIFIED: Simply fetches all approved loans for customer. Filtering happens in Service!
+    // fetch all approved loans for customer, filtering in Service.
     @Query("SELECT la FROM LoanApplication la " +
            "JOIN FETCH la.loanProduct lp " +
            "WHERE la.customer.customerId = :customerId " +
@@ -176,4 +171,14 @@ public interface ReportingRepo extends JpaRepository<LoanApplication, Integer> {
            "WHERE r.loanApplication.applicationId = :applicationId " +
            "AND r.paymentStatus = 'PENDING'")
     Optional<LocalDate> findNextDueDateByApplicationId(@Param("applicationId") Integer applicationId);
+
+    @Query("SELECT COALESCE(SUM(r.amountDue), 0) FROM Repayments r " +
+    		"JOIN r.loanApplication la " +
+    		"WHERE la.customer.customerId = :customerId " +
+    		"AND la.approvalStatus = 'APPROVED'")
+    BigDecimal sumTotalRepaymentAmountByCustomer(@Param("customerId") Integer customerId);
+
+    @Query("SELECT COALESCE(SUM(r.amountDue), 0) FROM Repayments r " +
+    		"WHERE r.loanApplication.applicationId = :applicationId")
+    BigDecimal sumTotalRepaymentAmountByApplicationId(@Param("applicationId") Integer applicationId);
 }

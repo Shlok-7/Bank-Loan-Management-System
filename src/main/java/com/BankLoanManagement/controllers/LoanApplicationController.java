@@ -3,10 +3,13 @@ package com.BankLoanManagement.controllers;
 import com.BankLoanManagement.entities.LoanApplication;
 import com.BankLoanManagement.services.LoanApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
  
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/loan-applications")
 public class LoanApplicationController {
@@ -24,8 +27,8 @@ public class LoanApplicationController {
 
  
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<LoanApplication>> getByCustomer(@PathVariable Integer customerId) {
-        return ResponseEntity.ok(service.getApplicationsByCustomer(customerId));
+    public ResponseEntity<Page<LoanApplication>> getByCustomer(@PathVariable Integer customerId, Pageable pageable) {
+        return ResponseEntity.ok(service.getApplicationsByCustomer(customerId,pageable));
     }
  
   

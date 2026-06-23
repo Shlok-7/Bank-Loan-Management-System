@@ -10,8 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.BankLoanManagement.entities.Banks;
+import com.BankLoanManagement.entities.LoanProducts;
 import com.BankLoanManagement.services.BanksService;
-
+@CrossOrigin(origins = "*")
 @RestController
 public class BanksController {
 
@@ -37,6 +38,14 @@ public class BanksController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
+    
+    // Get Loan Product By particular bank ID 
+    
+   @GetMapping("/getProductByBankId/{id}")
+   public ResponseEntity<List<LoanProducts>>getProductByBankId(@PathVariable Integer id) throws Exception{
+	   List<LoanProducts> lplist = servObject.getLoanProductByBankId(id);
+	   return new ResponseEntity<>(lplist , HttpStatus.OK) ; 
+   }
 
     	//admin
     // Adding the New Bank Details
