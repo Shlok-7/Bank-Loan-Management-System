@@ -1,0 +1,333 @@
+/* ==========================================
+   CSS Variables (Theme Tokens synced with Admin)
+   ========================================== */
+:root {
+    --primary-dark: #0f172a;
+    --primary-blue: #1e3a8a;
+    --accent-blue: #2563eb; 
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --bg-light: #f4f8fc; 
+    --white: #ffffff;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --border-color: #f1f5f9; 
+}
+
+* {
+    font-family: 'Poppins', 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+    background-color: var(--bg-light); 
+    color: var(--text-main);
+    overflow-x: hidden;
+    padding-top: 60px; /* Reduced from 76px to match the navbar height */
+    margin: 0;
+}
+
+/* ==========================================
+   MAIN NAVBAR (Fixed to Top)
+   ========================================== */
+.navbar {
+    background-color: var(--primary-dark);
+    color: var(--white);
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 2rem;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    
+    /* Fixed positioning */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1050;
+    box-sizing: border-box;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #38bdf8;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-links > a, 
+.dropdown-trigger {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.nav-links > a:hover,
+.dropdown-trigger:hover {
+    color: #f8fafc;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.nav-links > a.active {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* ==========================================
+   MODERN REPORTS DROPDOWN
+   ========================================== */
+.dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-trigger {
+    cursor: pointer;
+}
+
+.dropdown-content {
+    visibility: hidden; 
+    opacity: 0;
+    position: absolute;
+    top: 130%; 
+    left: 0;
+    background-color: var(--primary-dark); 
+    min-width: 220px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    transition: all 0.25s ease;
+    z-index: 1000;
+}
+
+.dropdown:hover .dropdown-content {
+    visibility: visible;
+    opacity: 1;
+    top: 100%; 
+}
+
+.dropdown-content a {
+    color: #94a3b8 !important; 
+    text-decoration: none !important;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.7rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: block; 
+    white-space: nowrap; 
+}
+
+.dropdown-content a:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff !important;
+}
+
+/* ==========================================
+   NAV RIGHT & USER PROFILE (STRICT ALIGNMENT)
+   ========================================== */
+.nav-right {
+    display: flex;
+    flex-direction: row; 
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.notification {
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+}
+
+.profile {
+    display: flex;
+    flex-direction: row; 
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.3rem 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.profile:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.profile span {
+    font-weight: 500;
+    color: var(--white);
+    font-size: 0.95rem;
+    white-space: nowrap; 
+}
+
+.avatar {
+    background-color: var(--accent-blue, #2563eb); 
+    color: var(--white, #ffffff);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+}
+
+/* ==========================================
+   Hero Banner Background
+   ========================================== */
+.admin-banner {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+    color: var(--white);
+    padding: 50px 0 100px 0; /* Ensures gap for negative margin */
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+/* ==========================================
+   Dashboard Specific Layout
+   ========================================== */
+.dash-wrapper {
+    margin-top: -3.5rem; 
+    position: relative;
+    z-index: 10;
+}
+
+.bank-card {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    border: none;
+    padding: 30px;
+    animation: slideUpFade 0.5s ease-out forwards;
+}
+
+.form-control {
+    border: 1px solid #e2e8f0;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    outline: none;
+}
+
+/* ==========================================
+   Table Configurations
+   ========================================== */
+.table {
+    margin-bottom: 0;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th { 
+    color: #94a3b8; 
+    font-size: 0.75rem; 
+    text-transform: uppercase; 
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid var(--border-color) !important; 
+    background-color: var(--white) !important;
+    padding: 1.2rem 1rem;
+}
+
+.table td { 
+    vertical-align: middle; 
+    color: var(--text-main); 
+    font-size: 0.95rem;
+    font-weight: 500; 
+    padding: 1.2rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover td { background-color: #f8fafc; }
+
+/* ==========================================
+   Repayment Badges & Selects
+   ========================================== */
+.badge-pending {
+    background-color: #fef3c7;
+    color: #b45309;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.badge-completed {
+    background-color: #dcfce7;
+    color: #15803d;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.form-select-sm {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-weight: 500;
+    color: var(--text-main);
+    box-shadow: none;
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+}
+
+.form-select-sm:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+/* ==========================================
+   Animations
+   ========================================== */
+@keyframes slideUpFade {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+}

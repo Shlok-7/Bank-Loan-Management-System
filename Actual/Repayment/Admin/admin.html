@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Repayments | LoanSync</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-light">
+
+    <!-- FIXED NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span>LoanSync Admin</span>
+            </div>
+            <div class="nav-links">
+                <a href="/Actual/Customer/Admin/admin-dashboard.html">Customers</a>
+                <a href="/Actual/Bank/Admin/index.html">Banks</a>
+                <a href="/Actual/LoanApplications/Admin/admin-application.html">Loan Applications</a>
+                <a class="active" href="/Actual/Repayment/Admin/admin.html">Repayments</a>
+                
+                <div class="dropdown">
+                    <a href="#" class="dropdown-trigger">Reports ▾</a>
+                    <div class="dropdown-content">
+                        <a href="/Actual/reporting_refactored/admin/admin-loan-dashboard.html">Loan Pipeline</a>
+                        <a href="/Actual/reporting_refactored/admin/admin-outstanding-dashboard.html">Outstanding Amounts</a>
+                        <a href="/Actual/reporting_refactored/admin/admin-repayment-dashboard.html">Repayment History</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="nav-right">
+            <div class="notification">🔔<span class="badge"></span></div>
+            
+            <div class="profile" onclick="logout()" style="cursor: pointer;" title="Click to logout">
+                <div class="avatar" id="nav-avatar">A</div>
+                <span id="nav-user-name">Admin User ▾</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ADMIN BANNER (Removed mt-4 to fix the gap) -->
+    <header class="admin-banner text-center text-md-start">
+        <div class="container">
+            <div class="d-flex flex-column flex-md-row align-items-center gap-4">
+                <div class="bg-white bg-opacity-10 p-3 rounded-4 text-info shadow-sm">
+                    <i class="bi bi-wallet2 fs-1"></i>
+                </div>
+                <div>
+                    <span class="badge bg-white bg-opacity-25 px-3 py-2 rounded-pill text-uppercase fw-semibold tracking-wider mb-3">Admin Workspace</span>
+                    <h1 class="fw-bold mb-1 text-white">Global Repayments</h1>
+                    <p class="text-white-50 mb-0 fs-6">View all cross-customer EMIs and manually override payment statuses securely.</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN WORKSPACE -->
+    <main class="container mb-5 dash-wrapper">
+        <div class="row">
+            <div class="col-12">
+                <div class="bank-card h-100">
+                    
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3 border-bottom pb-3">
+                        <h4 class="fw-bold mb-0 text-dark">
+                            <i class="bi bi-database-check text-warning me-2"></i>Repayment Records
+                        </h4>
+                        
+                        <div class="input-group shadow-sm rounded overflow-hidden" style="max-width: 350px;">
+                            <span class="input-group-text bg-light border-0 py-2"><i class="bi bi-search text-muted fs-5"></i></span>
+                            <input type="text" id="searchAppId" class="form-control border-0 bg-light shadow-none" 
+                                   placeholder="Search App ID..." onkeyup="filterAdminTable()">
+                        </div>
+                    </div>
+
+                    <div id="adminTableWrapper">
+                        <div class="table-responsive rounded border border-light">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light text-muted">
+                                    <tr>
+                                        <th class="ps-4">EMI ID</th>
+                                        <th>App ID</th>
+                                        <th>Due Date</th>
+                                        <th>Amount (₹)</th>
+                                        <th>Current Status</th>
+                                        <th class="text-end pe-4">Override Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminTableBody">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-5">
+                        <div class="col-12 d-flex justify-content-center" id="adminPaginationContainer"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast-container p-3">
+        <div id="statusToast" class="toast align-items-center text-white border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex p-1">
+                <div class="toast-body fw-medium fs-6" id="toastMessage"></div>
+                <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

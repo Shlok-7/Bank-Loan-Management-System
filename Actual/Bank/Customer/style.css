@@ -1,0 +1,154 @@
+/* ==========================================
+   CSS Variables (Theme Tokens)
+   ========================================== */
+:root {
+    --primary-dark: #0f172a;
+    --primary-blue: #1e3a8a;
+    --accent-blue: #2563eb; /* Darkened slightly to match image text */
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --bg-light: #f4f8fc; /* Slightly grayish background from image */
+    --white: #ffffff;
+    --success: #10b981;
+    --border-color: #f1f5f9; /* Softer border for table rows */
+}
+
+/* ==========================================
+   Base Styles & Typography
+   ========================================== */
+* {
+    font-family: 'Poppins', 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+    background-color: var(--bg-light); 
+    color: var(--text-main);
+    overflow-x: hidden;
+}
+
+/* ==========================================
+   Headers & Navigation
+   ========================================== */
+.glass-navbar {
+    background: var(--primary-dark) !important; 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 1rem 0;
+}
+
+.navbar-brand { 
+    font-weight: 700; 
+    color: #38bdf8 !important; 
+    font-size: 1.4rem; 
+}
+
+.nav-link {
+    color: #94a3b8 !important;
+    font-size: 0.9rem;
+    padding: 0.5rem 1.2rem !important;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.nav-link::after { display: none !important; }
+
+.nav-link:hover, .nav-link.active {
+    color: var(--white) !important;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Hero Section */
+.customer-header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+    color: var(--white);
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+    padding-bottom: 6rem !important; /* Extra padding for floating button */
+    padding-top: 6rem !important;
+}
+
+/* ==========================================
+   Table & Cards Layout
+   ========================================== */
+.table-wrapper {
+    margin-top: -3.5rem; /* Floats over the hero gradient */
+    position: relative;
+    z-index: 10;
+}
+
+.card {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    border: none !important;
+}
+
+.table {
+    margin-bottom: 0;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th { 
+    color: #94a3b8; 
+    font-size: 0.75rem; 
+    text-transform: uppercase; 
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid var(--border-color) !important; 
+    background-color: var(--white) !important;
+    padding: 1.5rem 1rem;
+}
+
+.table td { 
+    vertical-align: middle; 
+    color: var(--text-main); 
+    font-size: 0.95rem;
+    font-weight: 500; 
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover td {
+    background-color: #f8fafc;
+}
+
+/* ==========================================
+   Buttons
+   ========================================== */
+.btn-apply-dark {
+    background-color: var(--primary-dark) !important;
+    color: var(--white) !important;
+    border: none;
+    border-radius: 50px !important; /* Pill shape */
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.6rem 1.5rem !important;
+    transition: all 0.2s ease;
+}
+
+.btn-apply-dark:hover {
+    background-color: #1e293b !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.btn-back-float {
+    background: var(--white);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+}
+
+.btn-back-float:hover {
+    color: var(--text-main);
+    background: #f8fafc;
+}

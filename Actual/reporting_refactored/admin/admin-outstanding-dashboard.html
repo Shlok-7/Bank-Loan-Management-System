@@ -1,0 +1,660 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Outstanding Loan Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-dark': '#0d1b2a',
+                        'brand-blue': '#1b263b',
+                        'brand-accent': '#415a77',
+                        'brand-light': '#e0e1dd',
+                        'primary': '#2563eb'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="css/admin-common.css">
+</head>
+<body class="antialiased text-gray-800">
+
+    <div class="header-bg pt-8 pb-32 px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col items-center justify-center text-center space-y-4">
+                <span class="px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-semibold tracking-widest uppercase backdrop-blur-sm">
+                    Administrative Console
+                </span>
+                <div class="flex items-center gap-3 text-white">
+                    <i class="ph ph-warning-circle text-4xl text-orange-400"></i>
+                    <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Outstanding Loan Portfolio</h1>
+                </div>
+                <p class="text-blue-100 text-sm md:text-base max-w-2xl">
+                    Monitor portfolio risk, track aging delinquency buckets, and review outstanding exposure across active partner agreements.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 pb-12 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Total Outstanding Balance</p>
+                        <h2 class="text-2xl font-bold text-gray-900 mt-2" id="kpi-total-outstanding">₹0.00</h2>
+                    </div>
+                    <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+                        <i class="ph ph-coins text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Delinquent / Overdue Loans</p>
+                        <h2 class="text-2xl font-bold text-red-600 mt-2" id="kpi-overdue-count">0</h2>
+                    </div>
+                    <div class="p-2.5 bg-red-50 text-red-600 rounded-lg">
+                        <i class="ph ph-siren text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Largest Single Exposure</p>
+                        <h2 class="text-2xl font-bold text-gray-900 mt-2" id="kpi-largest-outstanding">₹0.00</h2>
+                    </div>
+                    <div class="p-2.5 bg-purple-50 text-purple-600 rounded-lg">
+                        <i class="ph ph-chart-line-up text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Avg Outstanding per Loan</p>
+                        <h2 class="text-2xl font-bold text-gray-900 mt-2" id="kpi-avg-outstanding">₹0.00</h2>
+                    </div>
+                    <div class="p-2.5 bg-green-50 text-green-600 rounded-lg">
+                        <i class="ph ph-scales text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col w-full">
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold text-gray-900">Delinquency Aging Buckets</h3>
+                    <p class="text-sm text-gray-500">Distribution of all active loans by their current days overdue status</p>
+                </div>
+                <div class="relative min-h-[300px] w-full">
+                    <canvas id="agingHistogramChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-0 shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Detailed Outstanding Portfolio</h3>
+                    <p class="text-sm text-gray-500">Sorted by highest outstanding balance.</p>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <thead>
+                        <tr class="bg-gray-50/80 border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider font-semibold">
+                            <th class="px-6 py-4">App ID</th>
+                            <th class="px-6 py-4">Customer Details</th>
+                            <th class="px-6 py-4">Bank & Product</th>
+                            <th class="px-6 py-4 text-right">Orig. Amount</th>
+                            <th class="px-6 py-4 text-right">Outstanding Bal.</th>
+                            <th class="px-6 py-4 text-center">Aging / Days Overdue</th>
+                            <th class="px-6 py-4 text-center">Int. Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="portfolio-table-body" class="divide-y divide-gray-100 text-sm text-gray-700">
+                        <tr>
+                            <td colspan="7" class="px-6 py-8 text-center text-gray-400">
+                                <i class="ph ph-spinner-gap animate-spin text-2xl mb-2 inline-block"></i>
+                                <p>Loading outstanding portfolio...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="p-4 border-t border-gray-100 bg-gray-50 text-xs text-gray-500 flex justify-between items-center">
+                <span id="table-entries-info">Showing 0 to 0 of 0 entries</span>
+                <div class="flex gap-1" id="paginationControls">
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="js/admin-outstanding-dashboard.js"></script>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Outstanding Loan Dashboard | LoanSync</title>
+    
+    <!-- Unified Framework Dependencies -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- External Engine Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+       /* ==========================================
+   CSS Variables (Theme Tokens synced with Admin)
+   ========================================== */
+:root {
+    --primary-dark: #0f172a;
+    --primary-blue: #1e3a8a;
+    --accent-blue: #2563eb; 
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --bg-light: #f4f8fc; 
+    --white: #ffffff;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --border-color: #f1f5f9; 
+}
+
+* {
+    font-family: 'Poppins', 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+    background-color: var(--bg-light); 
+    color: var(--text-main);
+    overflow-x: hidden;
+    padding-top: 30px; 
+    margin: 0;
+}
+
+/* ==========================================
+   MAIN NAVBAR (Fixed to Top)
+   ========================================== */
+.navbar {
+    background-color: var(--primary-dark);
+    color: var(--white);
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 2rem;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    
+    /* Fixed positioning */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1050;
+    box-sizing: border-box;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #38bdf8;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-links > a, 
+.dropdown-trigger {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.nav-links > a:hover,
+.dropdown-trigger:hover {
+    color: #f8fafc;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.nav-links > a.active {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* ==========================================
+   MODERN REPORTS DROPDOWN
+   ========================================== */
+.dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-trigger {
+    cursor: pointer;
+}
+
+.dropdown-content {
+    visibility: hidden; 
+    opacity: 0;
+    position: absolute;
+    top: 130%; 
+    left: 0;
+    background-color: var(--primary-dark); 
+    min-width: 220px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    transition: all 0.25s ease;
+    z-index: 1000;
+}
+
+.dropdown:hover .dropdown-content {
+    visibility: visible;
+    opacity: 1;
+    top: 100%; 
+}
+
+.dropdown-content a {
+    color: #94a3b8 !important; 
+    text-decoration: none !important;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.7rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: block; 
+    white-space: nowrap; 
+}
+
+.dropdown-content a:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff !important;
+}
+
+/* ==========================================
+   NAV RIGHT & USER PROFILE (STRICT ALIGNMENT)
+   ========================================== */
+.nav-right {
+    display: flex;
+    flex-direction: row; 
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.notification {
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+}
+
+.profile {
+    display: flex;
+    flex-direction: row; 
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.3rem 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.profile:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.profile span {
+    font-weight: 500;
+    color: var(--white);
+    font-size: 0.95rem;
+    white-space: nowrap; 
+}
+
+.avatar {
+    background-color: var(--accent-blue, #2563eb); 
+    color: var(--white, #ffffff);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+}
+
+/* ==========================================
+   Hero Banner Background
+   ========================================== */
+.admin-banner {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+    color: var(--white);
+    padding: 50px 0 100px 0; /* Ensures gap for negative margin */
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+        .dash-wrapper {
+            margin-top: -4.5rem; 
+            position: relative;
+            z-index: 10;
+        }
+
+        .bank-card {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            border: none;
+            padding: 28px;
+            animation: slideUpFade 0.5s ease-out forwards;
+        }
+
+        /* ==========================================
+           Data Tables & Components
+           ========================================== */
+        .table th { 
+            color: #94a3b8; 
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            border-bottom: 1px solid var(--border-color) !important; 
+            background-color: #fafbfe !important;
+            padding: 1.2rem 1rem;
+        }
+
+        .table td { 
+            vertical-align: middle; 
+            color: var(--text-main); 
+            font-size: 0.95rem;
+            font-weight: 500; 
+            padding: 1.2rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Custom Notification Toast Override */
+        #notification-toast {
+            position: fixed;
+            top: 90px;
+            right: 25px;
+            z-index: 2000;
+            transition: all 0.3s ease-in-out;
+        }
+
+        @keyframes slideUpFade {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Notification Toast Widget Container -->
+    <div id="notification-toast" class="alert alert-dark bg-dark text-white border-0 shadow-lg p-3 d-none align-items-center gap-3" role="alert">
+        <i class="bi bi-info-circle-fill text-info fs-5" id="notification-icon"></i>
+        <span id="notification-message" class="small fw-medium">Notification message here</span>
+    </div>
+
+    <!-- Unified Enterprise Admin Navbar -->
+     <nav class="navbar">
+        <div class="nav-left">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span>LoanSync Admin</span>
+            </div>
+            <div class="nav-links">
+                <a href="/Actual/Customer/Admin/admin-dashboard.html">Customers</a>
+                <a href="/Actual/Bank/Admin/index.html">Banks</a>
+                <a href="/Actual/LoanApplications/Admin/admin-application.html">Loan Applications</a>
+                <a  href="/Actual/Repayment/Admin/admin.html">Repayments</a>
+                
+                <div class="dropdown">
+                    <a class="active" href="#" class="dropdown-trigger">Reports ▾</a>
+                    <div class="dropdown-content">
+                        <a  href="/Actual/reporting_refactored/admin/admin-loan-dashboard.html">Loan Pipeline</a>
+                        <a href="/Actual/reporting_refactored/admin/admin-outstanding-dashboard.html">Outstanding Amounts</a>
+                        <a href="/Actual/reporting_refactored/admin/admin-repayment-dashboard.html">Repayment History</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="nav-right">
+            <div class="notification">🔔<span class="badge"></span></div>
+            
+            <div class="profile" onclick="logout()" style="cursor: pointer;" title="Click to logout">
+                <div class="avatar" id="nav-avatar">A</div>
+                <span id="nav-user-name">Admin User ▾</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Workspace Hero Banner Block Header Section -->
+    <header class="admin-banner text-center">
+        <div class="container-fluid px-4 mt-2">
+            <span class="badge bg-white bg-opacity-10 text-white border border-white border-opacity-10 px-4 py-2 rounded-pill text-uppercase fw-semibold tracking-wider mb-3" style="font-size: 0.75rem;">
+                Administrative Console
+            </span>
+            <div class="d-flex align-items-center justify-content-center gap-3 mb-2">
+                <i class="bi bi-exclamation-triangle text-warning fs-1"></i>
+                <h1 class="fw-bold mb-0 text-white tracking-tight font-display">Outstanding Loan Portfolio</h1>
+            </div>
+            <p class="text-white-50 mb-0 small mx-auto max-w-2xl">Monitor portfolio risk, track aging delinquency buckets, and review outstanding exposure across active partner agreements.</p>
+        </div>
+    </header>
+
+    <!-- Main Active Workspace Panel Layout wrapper -->
+    <main class="container-fluid px-4 mb-5 dash-wrapper">
+        
+        <!-- Functional KPI Analytics Row Grid -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="bank-card h-100 d-flex flex-column justify-content-between border-top border-primary border-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted text-uppercase small fw-bold tracking-wide mb-1" style="font-size: 0.7rem;">Total Outstanding Balance</p>
+                            <h3 class="fw-bold text-dark tracking-tight font-display mb-0" id="kpi-total-outstanding">₹0.00</h3>
+                        </div>
+                        <div class="p-2 bg-primary bg-opacity-10 text-primary rounded-3"><i class="bi bi-coin fs-5"></i></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3">
+                <div class="bank-card h-100 d-flex flex-column justify-content-between border-top border-danger border-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted text-uppercase small fw-bold tracking-wide mb-1" style="font-size: 0.7rem;">Delinquent / Overdue Loans</p>
+                            <h3 class="fw-bold text-danger tracking-tight font-display mb-0" id="kpi-overdue-count">0</h3>
+                        </div>
+                        <div class="p-2 bg-danger bg-opacity-10 text-danger rounded-3"><i class="bi bi-exclamation-octagon fs-5"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="bank-card h-100 d-flex flex-column justify-content-between border-top border-purple border-4" style="border-top-color: var(--purple);">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted text-uppercase small fw-bold tracking-wide mb-1" style="font-size: 0.7rem;">Largest Single Exposure</p>
+                            <h3 class="fw-bold text-dark tracking-tight font-display mb-0" id="kpi-largest-outstanding">₹0.00</h3>
+                        </div>
+                        <div class="p-2 bg-opacity-10 rounded-3" style="background-color: rgba(139, 92, 246, 0.1); color: var(--purple);"><i class="bi bi-graph-up fs-5"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="bank-card h-100 d-flex flex-column justify-content-between border-top border-success border-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted text-uppercase small fw-bold tracking-wide mb-1" style="font-size: 0.7rem;">Avg Outstanding per Loan</p>
+                            <h3 class="fw-bold text-dark tracking-tight font-display mb-0" id="kpi-avg-outstanding">₹0.00</h3>
+                        </div>
+                        <div class="p-2 bg-success bg-opacity-10 text-success rounded-3"><i class="bi bi-wallet2 fs-5"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delinquency Aging Histogram Chart Block -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="bank-card d-flex flex-column w-100">
+                    <div class="mb-4">
+                        <h5 class="fw-bold text-dark mb-1">Delinquency Aging Buckets</h5>
+                        <p class="text-muted text-xs mb-0">Distribution of all active loans by their current days overdue status.</p>
+                    </div>
+                    <div class="position-relative w-100 flex-grow-1 mt-2" style="min-height: 300px;">
+                        <canvas id="agingHistogramChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Outstanding Portfolio Table Block -->
+        <div class="bank-card p-0 overflow-hidden shadow-sm border rounded-3">
+            <div class="p-4 border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 bg-light bg-opacity-50">
+                <div>
+                    <h5 class="fw-bold text-dark mb-1">Detailed Outstanding Portfolio</h5>
+                    <p class="text-muted text-xs mb-0">Sorted by highest outstanding balance tracking matrix.</p>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 text-nowrap">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">App ID</th>
+                            <th>Customer Details</th>
+                            <th>Bank & Product</th>
+                            <th class="text-end">Orig. Amount</th>
+                            <th class="text-end">Outstanding Bal.</th>
+                            <th class="text-center">Aging / Days Overdue</th>
+                            <th class="text-center pe-4">Int. Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="portfolio-table-body">
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="d-flex flex-column align-items-center gap-2 py-4">
+                                    <div class="spinner-border text-primary spinner-border-sm animate-spin" role="status"></div>
+                                    <span class="text-muted small fw-medium">Loading outstanding portfolio...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Standard Control Pagination Interface Footer Widget -->
+            <div class="p-3 border-top bg-light bg-opacity-25 text-xs text-muted d-flex justify-content-between align-items-center">
+                <span id="table-entries-info" class="fw-medium">Showing 0 to 0 of 0 entries</span>
+                <div class="d-flex gap-1 align-items-center" id="paginationControls">
+                    <!-- Pagination populated by JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Element -->
+    <footer class="bg-dark text-secondary text-center py-4 border-top border-secondary border-opacity-10 mt-5">
+        <div class="container space-y-1">
+            <p class="mb-1 text-white-50 fw-semibold small">Nexus Core Banking API Module V2.1</p>
+            <p class="mb-0 text-muted" style="font-size: 0.75rem;">&copy; 2026 Nexus Financial Alliance Group. All sovereign rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Standard Execution Infrastructure Script dependencies Injection maps -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/admin-outstanding-dashboard.js"></script>
+    
+    <script>
+        // Inline system fallbacks for runtime stability mappings
+        function logout() {
+            if (confirm("Are you sure you want to securely log out?")) {
+                localStorage.clear();
+                window.location.replace('/Actual/Customer/login.html');
+            }
+        }
+        
+        // Emulated notification listener framework mapped for internal bootstrap actions
+        window.addEventListener('load', () => {
+            const defaultToast = document.getElementById('notification-toast');
+            if (defaultToast) {
+                // Intercept dynamic triggers or hooks if necessary
+                window.displaySystemAlert = function(msg, isSuccess = true) {
+                    const msgEl = document.getElementById('notification-message');
+                    const icoEl = document.getElementById('notification-icon');
+                    if (msgEl) msgEl.textContent = msg;
+                    if (icoEl) icoEl.className = isSuccess ? "bi bi-check-circle-fill text-success fs-5" : "bi bi-exclamation-triangle-fill text-danger fs-5";
+                    
+                    defaultToast.classList.remove('d-none');
+                    setTimeout(() => defaultToast.classList.add('d-none'), 5000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

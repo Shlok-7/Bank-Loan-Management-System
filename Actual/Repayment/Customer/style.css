@@ -1,0 +1,345 @@
+/* ==========================================
+   1. CSS VARIABLES (Theme Tokens synced with Customer Portal)
+   ========================================== */
+:root {
+    --primary-dark: #0f172a;
+    --primary-blue: #1e3a8a;
+    --accent-blue: #2563eb; 
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --bg-light: #f4f8fc; 
+    --white: #ffffff;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --border-color: #f1f5f9; 
+}
+
+/* ==========================================
+   2. BASE STYLES & TYPOGRAPHY
+   ========================================== */
+* {
+    font-family: 'Poppins', 'Plus Jakarta Sans', sans-serif;
+}
+
+
+.glass-navbar {
+    background: var(--primary-dark) !important; 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 1rem 0;
+}
+
+.navbar-brand { 
+    font-weight: 700; 
+    color: #38bdf8 !important; 
+    font-size: 1.4rem; 
+}
+
+.nav-link {
+    color: #94a3b8 !important;
+    font-size: 0.9rem;
+    padding: 0.5rem 1.2rem !important;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.nav-link::after { display: none !important; }
+
+.nav-link:hover, .nav-link.active {
+    color: var(--white) !important;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+
+body {
+    background-color: var(--bg-light); 
+    color: var(--text-main);
+    overflow-x: hidden;
+    padding-top: 76px;
+    -webkit-font-smoothing: antialiased;
+}
+
+.tracking-wide { letter-spacing: 0.05em; }
+.max-w-2xl { max-width: 42rem; }
+
+/* ==========================================
+   3. HEADERS & NAVIGATION (Mirrors Customer Portal)
+   ========================================== */
+.custom-navbar {
+    background: var(--primary-dark) !important; 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding: 1rem 0;
+    transition: all 0.3s ease;
+}
+
+.custom-navbar .navbar-brand { 
+    font-weight: 700; 
+    color: #38bdf8 !important; 
+    font-size: 1.4rem; 
+    letter-spacing: -0.5px;
+}
+
+.custom-navbar .nav-link {
+    color: #94a3b8 !important;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.5rem 1.2rem !important;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.custom-navbar .nav-link::after { display: none !important; }
+
+.custom-navbar .nav-link:hover, .custom-navbar .nav-link.active {
+    color: var(--white) !important;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-icon-link:hover { color: var(--white) !important; }
+
+.profile-circle {
+    width: 35px;
+    height: 35px;
+    background: var(--accent-blue);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 600;
+}
+
+.dropdown-menu {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.1);
+    padding: 10px;
+    background: var(--white);
+    margin-top: 0.5rem !important;
+}
+
+.dropdown-item {
+    border-radius: 8px;
+    font-weight: 500;
+    color: #475569;
+    transition: all 0.2s ease;
+    padding: 8px 16px;
+}
+
+.dropdown-item:hover { 
+    background-color: #eff6ff;
+    color: var(--accent-blue); 
+}
+
+/* ==========================================
+   4. HERO HEADER
+   ========================================== */
+.dashboard-header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+    color: var(--white);
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+    padding-bottom: 6rem !important; 
+    padding-top: 5rem !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-header .badge {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: var(--white) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Background abstract glow */
+.header-glow {
+    position: absolute;
+    top: -50%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%); 
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+}
+.z-index-1 { z-index: 1; }
+.title-tight { letter-spacing: -1px; }
+
+/* ==========================================
+   5. DASHBOARD LAYOUT & CARDS (White floating cards)
+   ========================================== */
+.metrics-container {
+    position: relative;
+    z-index: 10;
+}
+
+/* Transform the glass metric cards into crisp white bank-cards */
+.metric-card.glass-card {
+    background: var(--white) !important;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: none !important;
+    padding: 24px 30px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.metric-card.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* Override the inline HTML text-white classes to work on white backgrounds */
+.metric-card .text-white { color: var(--text-muted) !important; }
+.metric-card h2 { color: var(--text-main) !important; }
+
+/* Override Icon container to match Customer Portal */
+.metric-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    background: rgba(37, 99, 235, 0.1) !important;
+    color: var(--accent-blue) !important;
+    border: none !important;
+}
+
+/* Repayment Texts */
+.text-light-orange { color: var(--accent-blue) !important; font-weight: 800; letter-spacing: -0.5px; }
+.date-text-colour { color: #dc2626 !important; font-weight: 800; letter-spacing: -0.5px; }
+
+/* Application Card */
+.app-card {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.app-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08) !important;
+}
+
+/* ==========================================
+   6. DATA TABLE CONFIGURATIONS
+   ========================================== */
+.table-container {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    border: none;
+}
+
+.table {
+    margin-bottom: 0;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th { 
+    color: #94a3b8; 
+    font-size: 0.75rem; 
+    text-transform: uppercase; 
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid var(--border-color) !important; 
+    background-color: var(--white) !important;
+    padding: 1.2rem 1rem;
+}
+
+.table td { 
+    vertical-align: middle; 
+    color: var(--text-main); 
+    font-size: 0.95rem;
+    font-weight: 500; 
+    padding: 1.2rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover td { background-color: #f8fafc; }
+
+/* ==========================================
+   7. BADGES & BUTTONS
+   ========================================== */
+.badge-pending {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+}
+
+.badge-completed {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+}
+
+/* Updated Pay Now button to match apply button */
+.btn-pay {
+    background-color: var(--primary-dark) !important;
+    color: var(--white) !important;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.65rem 1.5rem !important;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+.btn-pay:hover:not(:disabled) {
+    background-color: #1e293b !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.btn-pay:disabled {
+    background: #f1f5f9 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+/* ==========================================
+   8. TOASTS & UTILS
+   ========================================== */
+.toast-container {
+    position: fixed;
+    top: 90px;
+    right: 20px;
+    z-index: 1055;
+}
+
+.hover-opacity-100:hover { opacity: 1 !important; }
+
+.cursor-pointer {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.cursor-pointer:hover { opacity: 0.7; }
+
+/* Fintech-blue pulse for scrolling to EMI */
+@keyframes highlightPulse {
+    0% { background-color: rgba(37, 99, 235, 0.15); }
+    100% { background-color: transparent; }
+}
+
+.highlight-pulse td {
+    animation: highlightPulse 4s ease-out forwards !important;
+}
